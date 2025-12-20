@@ -1,0 +1,8 @@
+.vscode/
+openshift-install
+config/
+pull-secret.txt
+logs/
+secrets/
+id_*
+gcp_service_account.json
