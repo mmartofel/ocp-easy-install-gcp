@@ -13,8 +13,8 @@ It simplifies the setup process by handling instance type selection, pull secret
 
 ## 💡 Features
 
-- ✅ Automatic detection of **AWS region** and **base domain** (Route53)
-- ✅ Pre-flight checks for **openshift-install**, AWS credentials, SSH keys, and pull secrets
+- ✅ Automatic detection of **GCP region** and **base domain**
+- ✅ Pre-flight checks for **openshift-install**, GCP credentials, SSH keys, and pull secrets
 - ✅ Interactive selection of **master and worker instance types**
 - ✅ Easy selection of **OpenShift versions** from the stable channel
 - ✅ Automatic generation of **install-config.yaml** with all required fields
@@ -47,15 +47,24 @@ cd ocp-easy-install-gcp
 2. **Set optional environment variables:**
 
 ```bash
-export AWS_PROFILE=default
-export CLUSTER_NAME=zenek
-export CLUSTER_DIR=./config
-export BASE_DOMAIN=example.com
+CLUSTER_DIR=./config
+CLUSTER_NAME=zenek
+BASE_DOMAIN=example.com
+PULL_SECRET_FILE=./pull-secret.txt
+SSH_KEY_FILE=./ssh/id_rsa.pub
+GCP_PROJECT_ID=my-gcp-project
+GCP_REGION=us-central1
 ```
 
 or do nothing and stay with default set at install.sh
 
-3. **Run the installation script:**
+3. **Configure your access to GCP**
+
+```bash
+./gcp_configure.sh
+```
+
+4. **Run the installation script:**
 
 ```bash
 ./install.sh
@@ -66,7 +75,7 @@ or do nothing and stay with default set at install.sh
 Follow the interactive prompts to choose master and worker instance types, and OpenShift version.
 The script will generate install-config.yaml and start the cluster installation. Once installation is finished, at the end of an output you see all the informations required to connect and use your newly installed Red Hat OpenShift cluster. Enjoy!
 
-4. **Access your cluster:**
+5. **Access your cluster:**
 
 for example using oc CLI
 
@@ -101,7 +110,7 @@ You can modify:
 ./instances/worker
 ```
 
-files content to update available AWS instance types, I just provided a few tested, feel free to put your own you need at your cluster.
+files content to update available RCP instance types, I just provided a few tested, feel free to put your own you need at your cluster.
 
 Here is a great place to use GPU equited instances to start your jouney with AI, best would be Red Hat OpenShift AI ;-)
 
