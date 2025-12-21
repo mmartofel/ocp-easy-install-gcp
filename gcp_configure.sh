@@ -1,6 +1,9 @@
 
 gcloud init
 
+# Copy service account file where openshift-install expects it 
+cp ./gcp_service_account.json ${HOME}/.gcp/osServiceAccount.json
+
 # Required API services
 
 gcloud services enable compute.googleapis.com

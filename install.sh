@@ -155,6 +155,82 @@ select_instance_type() {
   echo "$selected"
 }
 
+###############################################
+# FETCH AVAILABLE OCP VERSIONS FOR GIVEN MINOR
+###############################################
+get_ocp_versions() {
+    local channel="stable-4.20"
+
+    echo "💡 Fetching OpenShift versions from channel: $channel ..." >&2
+
+    ALL_VERSIONS=$(curl -s "https://api.openshift.com/api/upgrades_info/v1/graph?channel=${channel}" \
+        | jq -r '.nodes[].version')
+
+    VERSIONS=$(echo "$ALL_VERSIONS" | grep '^4\.20\.' | sort -V)
+
+    if [[ -z "$VERSIONS" ]]; then
+        echo "❌ No OpenShift 4.20 versions found in $channel" >&2
+        exit 1
+    fi
+
+    # IMPORTANT: print ONLY versions here, NOTHING ELSE
+    echo "$VERSIONS"
+}
+
+###############################################
+# SELECT OCP VERSION
+###############################################
+select_ocp_version() {
+    # Read get_ocp_versions line by line into array
+    versions=()
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && versions+=("$line")
+    done < <(get_ocp_versions)
+
+    if [[ ${#versions[@]} -eq 0 ]]; then
+        echo "❌ No OpenShift versions found!" >&2
+        exit 1
+    fi
+
+    echo "💡 Available OpenShift ${versions[0]%.*}.x versions:"
+    echo "----------------------------------------"
+
+    for i in "${!versions[@]}"; do
+        printf "  [%d] %s\n" $((i+1)) "${versions[$i]}"
+    done
+
+    # default is last element
+    default_choice=${#versions[@]}
+    read -p "Choose OpenShift version (default=${versions[$((default_choice-1))]}): " choice
+
+    if [[ -z "$choice" ]]; then
+        SELECTED_VERSION="${versions[$((default_choice-1))]}"
+    else
+        # validate choice
+        if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#versions[@]} )); then
+            echo "❌ Invalid choice. Must be 1..${#versions[@]}" >&2
+            exit 1
+        fi
+        SELECTED_VERSION="${versions[$((choice-1))]}"
+    fi
+
+    echo "✅ Selected OpenShift version: $SELECTED_VERSION"
+}
+
+##############################################
+# SET RELEASE IMAGE
+##############################################
+set_release_image() {
+    RELEASE_IMAGE="quay.io/openshift-release-dev/ocp-release:${SELECTED_VERSION}-x86_64"
+
+    echo "💡 Using release image:"
+    echo "   $RELEASE_IMAGE"
+
+    export OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="$RELEASE_IMAGE"
+
+    echo "✅ Release override set successfully."
+}
+
 ##############################################
 # GENERATE install-config.yaml (GCP)
 ##############################################
@@ -208,7 +284,11 @@ main() {
   WORKER_INSTANCE_TYPE=$(select_instance_type "$WORKER_FILE" "worker")
 
   generate_install_config
+  select_ocp_version
+  set_release_image
 
+  log_info "Release image set to:"
+  log_info "  $RELEASE_IMAGE"
   log_info "Starting OpenShift installation on GCP..."
   ./openshift-install create cluster --dir "$CLUSTER_DIR"
 
