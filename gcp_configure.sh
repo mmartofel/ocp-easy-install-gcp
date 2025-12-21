@@ -20,6 +20,7 @@ gcloud services enable servicemanagement.googleapis.com
 gcloud services enable storage.googleapis.com
 gcloud services enable storage-api.googleapis.com
 gcloud services enable storage-component.googleapis.com
+gcloud services enable file.googleapis.com
 
 # Enable assets listing
 
