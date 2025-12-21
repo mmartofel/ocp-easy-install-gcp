@@ -124,14 +124,12 @@ Custom release image override is used to start from most recent or just purposly
 
 ## 📖 References
 
-OpenShift Installation Guide
-
-AWS OpenShift Installer
+[OpenShift Installing on Google Cloud](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/installing_on_google_cloud/index)
 
 ## 🤝 Contributing
 
 Feel free to submit issues, pull requests, or suggest new features.
-This project is meant to simplify Red Hat OpenShift installations at AWS for any users and is community-driven.
+This project is meant to simplify Red Hat OpenShift installations at GCP for any users and is community-driven.
 
 ## ⚡ License
 
