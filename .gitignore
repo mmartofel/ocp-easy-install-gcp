@@ -6,3 +6,4 @@ logs/
 secrets/
 id_*
 gcp_service_account.json
+plan.md
