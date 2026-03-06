@@ -10,6 +10,8 @@ BASE_DOMAIN="${BASE_DOMAIN:-example.com}"
 PULL_SECRET_FILE="${PULL_SECRET_FILE:-./pull-secret.txt}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-./ssh/id_rsa.pub}"
 
+OFFER_TYPE=${OFFER_TYPE:-"bring-your-own-subscription"}
+
 GCP_PROJECT_ID="${GCP_PROJECT_ID:-}"
 GCP_REGION="${GCP_REGION:-us-central1}"
 
@@ -41,8 +43,6 @@ log_error() { echo -e "${RED}${ERROR} $1${RESET}" >&2; }
 ##############################################
 # OFFER TYPE SELECTION
 ##############################################
-OFFER_TYPE=${OFFER_TYPE:-"bring-your-own-subscription"}
-
 prompt_offer_type() {  
 
   echo >&2
@@ -306,6 +306,8 @@ generate_install_config() {
 
   log_info "Generating install-config.yaml..."
 
+if [[ "$OFFER_TYPE" == "marketplace" ]]; then
+
   cat > "$CLUSTER_DIR/install-config.yaml" <<EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
@@ -337,6 +339,38 @@ pullSecret: '$(tr -d '\n' < "$PULL_SECRET_FILE")'
 sshKey: '$(cat "$SSH_KEY_FILE")'
 EOF
 
+else
+
+  cat > "$CLUSTER_DIR/install-config.yaml" <<EOF
+apiVersion: v1
+baseDomain: ${BASE_DOMAIN}
+metadata:
+  name: ${CLUSTER_NAME}
+compute:
+- name: worker
+  replicas: 3
+  platform:
+    gcp:
+      type: ${WORKER_INSTANCE_TYPE}
+controlPlane:
+  name: master
+  replicas: 3
+  platform:
+    gcp:
+      type: ${MASTER_INSTANCE_TYPE}
+networking:
+  networkType: OVNKubernetes
+platform:
+  gcp:
+    projectID: ${GCP_PROJECT_ID}
+    region: ${GCP_REGION}
+publish: External
+pullSecret: '$(tr -d '\n' < "$PULL_SECRET_FILE")'
+sshKey: '$(cat "$SSH_KEY_FILE")'
+EOF
+
+fi
+
   log_success "install-config.yaml generated successfully!"
 }
 
@@ -350,7 +384,9 @@ main() {
   detect_gcp_region
   prompt_offer_type
 
-  OCP_SKU_TYPE=$(select_ocp_sku_type "$OCP_SKU_FILE" "openshift")
+  if [[ "$OFFER_TYPE" == "marketplace" ]]; then
+    OCP_SKU_TYPE=$(select_ocp_sku_type "$OCP_SKU_FILE" "openshift")
+  fi
 
   MASTER_INSTANCE_TYPE=$(select_instance_type "$MASTER_FILE" "master")
   WORKER_INSTANCE_TYPE=$(select_instance_type "$WORKER_FILE" "worker")
