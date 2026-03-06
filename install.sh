@@ -290,8 +290,7 @@ main() {
   log_info "Release image set to:"
   log_info "  $RELEASE_IMAGE"
   log_info "Starting OpenShift installation on GCP..."
-#  ./openshift-install create cluster --dir "$CLUSTER_DIR"
-
+  ./openshift-install create cluster --dir "$CLUSTER_DIR"
   log_success "Installation completed"
   log_info "Kubeconfig: $CLUSTER_DIR/auth/kubeconfig"
 }
