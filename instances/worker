@@ -1,2 +1,5 @@
 n2-standard-4|4 vCPU 16GiB of RAM
 n2-standard-8|8 vCPU 32GiB of RAM
+g2-standard-8|8 vCPU 32GiB of RAM 1xNVIDIA L4 (24 GB)
+a2-ultragpu-1g|12 vCPU 170GiB of RAM 1xNVIDIA A100 (80 GB)
+g4-standard-48|48 vCPU 180GiB of RAM 1xNVIDIA RTX (96 GB)
