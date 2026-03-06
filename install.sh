@@ -10,11 +10,14 @@ BASE_DOMAIN="${BASE_DOMAIN:-example.com}"
 PULL_SECRET_FILE="${PULL_SECRET_FILE:-./pull-secret.txt}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-./ssh/id_rsa.pub}"
 
+OFFER_TYPE=${OFFER_TYPE:-"bring-your-own-subscription"}
+
 GCP_PROJECT_ID="${GCP_PROJECT_ID:-}"
 GCP_REGION="${GCP_REGION:-us-central1}"
 
 MASTER_FILE="./instances/master"
 WORKER_FILE="./instances/worker"
+OCP_SKU_FILE="./instances/marketplace"
 
 ##############################################
 # COLORS & ICONS
@@ -32,9 +35,67 @@ WARN="⚠️"
 ERROR="❌"
 
 log_info() { echo -e "${CYAN}${INFO} $1${RESET}"; }
+log_question() { echo -e "${MAGENTA}${INFO} $1${RESET}"; }
 log_success() { echo -e "${GREEN}${SUCCESS} $1${RESET}"; }
 log_warn() { echo -e "${YELLOW}${WARN} $1${RESET}"; }
 log_error() { echo -e "${RED}${ERROR} $1${RESET}" >&2; }
+
+##############################################
+# OFFER TYPE SELECTION
+##############################################
+prompt_offer_type() {  
+
+  echo >&2
+  log_question "Choose your preferred subscription mode:"
+
+  echo -e "  [1] Bring Your Own Subscription (default)"
+  echo -e "  [2] Marketplace"
+  read -rp "Enter your choice [1-2]: " choice
+
+  case "$choice" in
+    2)
+      OFFER_TYPE="marketplace"
+      ;;
+    *)
+      OFFER_TYPE="bring-your-own-subscription"
+      ;;
+  esac
+
+  log_success "Selected subscription model: $OFFER_TYPE"
+}
+
+###############################################
+# OPENSHIFT SKU SELECTION (FOR MARKETPACE ONLY)
+###############################################
+select_ocp_sku_type() {
+  local file="$1"
+  local role="$2"
+
+  echo >&2
+  echo -e "${MAGENTA}${INFO} Available ${role} editions:${RESET}" >&2
+  echo "----------------------------------------" >&2
+
+  local i=1
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    echo "  [$i] $line" >&2
+    ((i++))
+  done < "$file"
+
+  read -rp "Choose ${role} edition (default=1): " choice >&2
+  [[ -z "$choice" ]] && choice=1
+
+  local total
+  total=$(grep -c '' "$file")
+
+  [[ "$choice" =~ ^[0-9]+$ ]] || exit 1
+  (( choice >=1 && choice <= total )) || exit 1
+
+  local selected
+  selected=$(sed -n "${choice}p" "$file" | cut -d'|' -f1)
+
+  echo -e "${GREEN}${SUCCESS} Selected ${role} marketplace image: $selected${RESET}" >&2
+  echo "$selected"
+}
 
 ##############################################
 # PRE-FLIGHT CHECKS (GCP)
@@ -48,8 +109,13 @@ preflight_checks() {
 
   [[ -f "$PULL_SECRET_FILE" ]] || { log_error "Pull secret not found"; exit 1; }
   [[ -f "$SSH_KEY_FILE" ]] || { log_error "SSH key not found"; exit 1; }
-  [[ -f "$MASTER_FILE" ]] || { log_error "Master instance list not found"; exit 1; }
-  [[ -f "$WORKER_FILE" ]] || { log_error "Worker instance list not found"; exit 1; }
+
+  if [[ "$OFFER_TYPE" == "marketplace" ]]; then
+    [[ -d "./instances/marketplace" ]] || { log_error "Marketplace images directory not found"; exit 1; }
+  else
+    [[ -f "$MASTER_FILE" ]] || { log_error "Master instance list not found"; exit 1; }
+    [[ -f "$WORKER_FILE" ]] || { log_error "Worker instance list not found"; exit 1; }
+  fi
 
   gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q . || {
     log_error "Not authenticated to GCP. Run: gcloud init"
@@ -123,7 +189,7 @@ detect_gcp_region() {
 }
 
 ##############################################
-# INSTANCE SELECTION (UNCHANGED)
+# INSTANCE SELECTION (FOR MASTERS AND WORKERS)
 ##############################################
 select_instance_type() {
   local file="$1"
@@ -240,6 +306,41 @@ generate_install_config() {
 
   log_info "Generating install-config.yaml..."
 
+if [[ "$OFFER_TYPE" == "marketplace" ]]; then
+
+  cat > "$CLUSTER_DIR/install-config.yaml" <<EOF
+apiVersion: v1
+baseDomain: ${BASE_DOMAIN}
+metadata:
+  name: ${CLUSTER_NAME}
+compute:
+- name: worker
+  replicas: 3
+  platform:
+    gcp:
+      type: ${WORKER_INSTANCE_TYPE}
+      osImage:
+        project: redhat-marketplace-public
+        name: ${OCP_SKU_TYPE}
+controlPlane:
+  name: master
+  replicas: 3
+  platform:
+    gcp:
+      type: ${MASTER_INSTANCE_TYPE}
+networking:
+  networkType: OVNKubernetes
+platform:
+  gcp:
+    projectID: ${GCP_PROJECT_ID}
+    region: ${GCP_REGION}
+publish: External
+pullSecret: '$(tr -d '\n' < "$PULL_SECRET_FILE")'
+sshKey: '$(cat "$SSH_KEY_FILE")'
+EOF
+
+else
+
   cat > "$CLUSTER_DIR/install-config.yaml" <<EOF
 apiVersion: v1
 baseDomain: ${BASE_DOMAIN}
@@ -268,6 +369,8 @@ pullSecret: '$(tr -d '\n' < "$PULL_SECRET_FILE")'
 sshKey: '$(cat "$SSH_KEY_FILE")'
 EOF
 
+fi
+
   log_success "install-config.yaml generated successfully!"
 }
 
@@ -279,6 +382,11 @@ main() {
   detect_gcp_project
   detect_base_domain
   detect_gcp_region
+  prompt_offer_type
+
+  if [[ "$OFFER_TYPE" == "marketplace" ]]; then
+    OCP_SKU_TYPE=$(select_ocp_sku_type "$OCP_SKU_FILE" "openshift")
+  fi
 
   MASTER_INSTANCE_TYPE=$(select_instance_type "$MASTER_FILE" "master")
   WORKER_INSTANCE_TYPE=$(select_instance_type "$WORKER_FILE" "worker")
