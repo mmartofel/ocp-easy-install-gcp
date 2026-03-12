@@ -6,6 +6,7 @@ set -euo pipefail
 ##############################################
 CLUSTER_DIR="${CLUSTER_DIR:-./config}"
 CLUSTER_NAME="${CLUSTER_NAME:-zenek}"
+CHANNEL="${CHANNEL:-stable-4.19}"
 BASE_DOMAIN="${BASE_DOMAIN:-example.com}"
 PULL_SECRET_FILE="${PULL_SECRET_FILE:-./pull-secret.txt}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-./ssh/id_rsa.pub}"
@@ -225,17 +226,21 @@ select_instance_type() {
 # FETCH AVAILABLE OCP VERSIONS FOR GIVEN MINOR
 ###############################################
 get_ocp_versions() {
-    local channel="stable-4.20"
+    local channel=${CHANNEL}
+
+    # strip the “stable-” prefix – every track begins with it
+    local minor=${channel#stable-}
 
     echo "💡 Fetching OpenShift versions from channel: $channel ..." >&2
 
     ALL_VERSIONS=$(curl -s "https://api.openshift.com/api/upgrades_info/v1/graph?channel=${channel}" \
         | jq -r '.nodes[].version')
 
-    VERSIONS=$(echo "$ALL_VERSIONS" | grep '^4\.20\.' | sort -V)
+    # use the computed minor in the grep
+    VERSIONS=$(echo "$ALL_VERSIONS" | grep "^${minor}\." | sort -V)
 
     if [[ -z "$VERSIONS" ]]; then
-        echo "❌ No OpenShift 4.20 versions found in $channel" >&2
+        echo "❌ No OpenShift versions found in $channel" >&2
         exit 1
     fi
 

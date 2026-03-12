@@ -64,6 +64,7 @@ PULL_SECRET_FILE=./pull-secret.txt
 SSH_KEY_FILE=./ssh/id_rsa.pub
 GCP_PROJECT_ID=my-gcp-project
 GCP_REGION=us-central1
+CHANNEL=stable-4.21
 ```
 
 or do nothing and stay with default set at install.sh
