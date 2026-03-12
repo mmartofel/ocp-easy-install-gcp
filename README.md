@@ -81,6 +81,8 @@ or do nothing and stay with default set at install.sh
 ./install.sh
 ```
 
+![OpenShift installation process](images/install_gcp.png)
+
 Follow the interactive prompts to:
 
 1. Choose your subscription mode:
