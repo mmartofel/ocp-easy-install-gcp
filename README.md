@@ -142,6 +142,7 @@ The installer supports automatic OpenShift version selection from the stable cha
 
 ```bash
 CHANNEL=stable-4.21 ./install.sh
+```
 
 The script includes pre-flight checks to prevent common errors.
 
