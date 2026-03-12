@@ -64,6 +64,7 @@ PULL_SECRET_FILE=./pull-secret.txt
 SSH_KEY_FILE=./ssh/id_rsa.pub
 GCP_PROJECT_ID=my-gcp-project
 GCP_REGION=us-central1
+CHANNEL=stable-4.21
 ```
 
 or do nothing and stay with default set at install.sh
@@ -79,6 +80,8 @@ or do nothing and stay with default set at install.sh
 ```bash
 ./install.sh
 ```
+
+![OpenShift installation process](images/install_gcp.png)
 
 Follow the interactive prompts to:
 
@@ -118,7 +121,7 @@ or via brawser as of an info passed at the end of paragraph 4
 └── uninstall.sh             # Script to uninstall OpenShift cluster
 ```
 
-You need to provide your own `gcp_service_account.json` containing your GCP service account credentials and pull secret as `pull-secret.txt` in the root of the repository. Generate your own SSH key with `./ssh/gen.sh` or use existing one. Also openshift-install binary must be in this directory, you can download it from [Red Hat OpenShift](https://cloud.redhat.com/openshift/install) matching your platform you ar einstalling from and OpenShift version.
+You need to provide your own `gcp_service_account.json` containing your GCP service account credentials and pull secret as `pull-secret.txt` in the root of the repository. Generate your own SSH key with `./ssh/gen.sh` or use existing one. Also openshift-install binary must be in this directory, you can download it from [Red Hat OpenShift](https://cloud.redhat.com/openshift/install) matching your platform you are installing from and OpenShift version. Openshift installer version must not necessarily match the OpenShift version you are installing, script manages that, but it is recommended to use the same or newer version of installer than the OpenShift version you want to install.
 
 ## 🖌️ Customization
 
@@ -129,13 +132,17 @@ You can modify:
 ./instances/worker
 ```
 
-files content to update available RCP instance types, I just provided a few tested, feel free to put your own you need at your cluster.
+files content to update available GCP instance types, I just provided a few tested, feel free to put your own you need at your cluster.
 
 Here is a great place to use GPU equited instances to start your jouney with AI, best would be Red Hat OpenShift AI ;-)
 
 ## ⚠️ Notes
 
-The installer supports automatic OpenShift version selection from the stable channel (e.g., stable-4.20). You can modify your channel over time, or propose how can we improve that functionality together.
+The installer supports automatic OpenShift version selection from the stable channel set by the `CHANNEL` environment variable. Set it before instation like this:
+
+```bash
+CHANNEL=stable-4.21 ./install.sh
+```
 
 The script includes pre-flight checks to prevent common errors.
 
@@ -147,7 +154,7 @@ Custom release image override is used to start from most recent or just purposly
 
 ## 🤝 Contributing
 
-Feel free to submit issues, pull requests, or suggest new features.
+Feel free to submit issues, pull requests, or suggest new features with issues.
 This project is meant to simplify Red Hat OpenShift installations at GCP for any users and is community-driven.
 
 ## ⚡ License
