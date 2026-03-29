@@ -4,7 +4,7 @@ If you want to use spot instances for your OpenShift cluster on GCP, you can con
 
 providerSpec:
   value:
-    machineType: g2-standard-8
-    onHostMaintenance: Terminate.  # Required for GPU instances
-    restartPolicy: Always
-    preemptible: true              # meens this instance will be a spot instance
+    machineType: g2-standard-8     # GPU instance type
+    onHostMaintenance: Terminate   # Required for GPU instances
+    restartPolicy: Never           # Required for GPU instances
+    preemptible: true              # means this instance will be a spot instance
