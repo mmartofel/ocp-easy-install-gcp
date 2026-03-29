@@ -148,6 +148,10 @@ The script includes pre-flight checks to prevent common errors.
 
 Custom release image override is used to start from most recent or just purposly chosen patch version at the start to save time for 'after install' upgrades chain.
 
+## GPU spot VMs 
+
+You can easily add GPU equipped spot instance creating new MachineSet, required changes are described at [spot_instances.md](./spot_instance.md) file.
+
 ## 📖 References
 
 [OpenShift Installing on Google Cloud](https://docs.redhat.com/en/documentation/openshift_container_platform/4.20/html/installing_on_google_cloud/index)
