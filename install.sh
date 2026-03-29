@@ -6,7 +6,7 @@ set -euo pipefail
 ##############################################
 CLUSTER_DIR="${CLUSTER_DIR:-./config}"
 CLUSTER_NAME="${CLUSTER_NAME:-zenek}"
-CHANNEL="${CHANNEL:-stable-4.19}"
+CHANNEL="${CHANNEL:-stable-4.21}"
 BASE_DOMAIN="${BASE_DOMAIN:-example.com}"
 PULL_SECRET_FILE="${PULL_SECRET_FILE:-./pull-secret.txt}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-./ssh/id_rsa.pub}"
