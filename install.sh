@@ -6,7 +6,7 @@ set -euo pipefail
 ##############################################
 CLUSTER_DIR="${CLUSTER_DIR:-./config}"
 CLUSTER_NAME="${CLUSTER_NAME:-zenek}"
-CHANNEL="${CHANNEL:-stable-4.19}"
+CHANNEL="${CHANNEL:-stable-4.21}"
 BASE_DOMAIN="${BASE_DOMAIN:-example.com}"
 PULL_SECRET_FILE="${PULL_SECRET_FILE:-./pull-secret.txt}"
 SSH_KEY_FILE="${SSH_KEY_FILE:-./ssh/id_rsa.pub}"
@@ -380,9 +380,21 @@ fi
 }
 
 ##############################################
+# CLEANUP OLD CLUSTER INSTALL FILES
+##############################################
+cleanup_old_cluster_files() {
+  if [[ -d "$CLUSTER_DIR" ]]; then
+    log_warn "Old cluster installation files detected in $CLUSTER_DIR. Cleaning up..."
+    rm -rf "$CLUSTER_DIR"/* "$CLUSTER_DIR"/.* 2>/dev/null || true
+    log_success "Old cluster installation files cleaned up."
+  fi
+}
+
+##############################################
 # MAIN
 ##############################################
 main() {
+  cleanup_old_cluster_files
   preflight_checks
   detect_gcp_project
   detect_base_domain
