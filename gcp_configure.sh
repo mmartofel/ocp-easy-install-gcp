@@ -1,3 +1,4 @@
+gcloud auth login
 
 gcloud init
 
